@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include "mpi.h"
+#include <time.h> 
+/* run this program using the console pauser or add your own getch, system("pause") or input loop */
+
+int main(int argc, char *argv[]) {	
+	int my_rank;		// rank of process	
+	int p;			// number of process	
+	int source = 0;		// rank of sender	
+	int des;		// rank of reciever	
+	int tag = 0;		// tag for messages	
+	int index = 0;
+	int j,i,m;
+	int totalSize;
+	int total=0;
+	int size;
+	int number;
+	//int *array=malloc(totalSize*sizeof(int));
+	
+	MPI_Status status;	/* return status for 	*/
+				/* recieve		*/
+
+	/* Start up MPI */
+	MPI_Init( &argc , &argv );
+
+	/* Find out process rank */
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+	/* Find out number of process */
+	MPI_Comm_size(MPI_COMM_WORLD, &p);
+
+if(my_rank ==0){
+	
+	printf("Hello From Master Process \n");
+
+	printf("please enter the number to collect factorial  \n");
+	scanf("%d",&number);
+	int a=p-1;
+	size=number/a;
+	clock_t t;
+	for( des = 1; des < p ; des++)
+		{
+
+		    if(des == p - 1){
+
+			   //the last process takes the rest of the message
+			   	size = size + ( number % (p - 1));
+			}
+			
+			MPI_Send( &index, 1, MPI_INT, des, tag, MPI_COMM_WORLD);
+			total=total+size;
+			MPI_Send(&total, 1, MPI_INT, des, tag, MPI_COMM_WORLD);
+			index =index + size;
+		}
+		int fac;
+		int totalfact=1;
+		for(des =1;des<p;des++){			
+      MPI_Recv(&fac, 1 , MPI_INT, des, tag, MPI_COMM_WORLD, &status );
+      totalfact*=fac;
+		}
+		printf("the factorial of %d =%d \n",number,totalfact);
+		
+	t=clock()-t;
+	printf ("It took me %d clicks (%f seconds).\n",t,((float)t)/CLOCKS_PER_SEC);
+}
+
+else{
+	int num,ind;
+	MPI_Recv(&ind, 1 , MPI_INT, source, tag, MPI_COMM_WORLD, &status );
+    MPI_Recv(&num, 1 , MPI_INT, source, tag, MPI_COMM_WORLD, &status );
+		int fact=1;
+		for(m=num;m>ind;m--){
+		fact=fact*m;		
+}
+printf("fact of sub %d \n",fact);	
+	MPI_Send(&fact, 1, MPI_INT, source, tag, MPI_COMM_WORLD);
+}
+
+
+	MPI_Finalize();
+
+	return 0;
+}
