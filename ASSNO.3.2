@@ -1,0 +1,56 @@
+
+
+#include <stdio.h>
+#include <string.h>
+#include "mpi.h"
+#include <time.h> 
+int main(int argc , char * argv[])
+{
+	int my_rank;		/* rank of process	*/
+	int p;			/* number of process	*/
+	int source = 0;		/* rank of sender	*/
+	int des;		/* rank of reciever	*/
+	int tag = 0;		/* tag for messages	*/
+	int index = 0;
+	int num,i,factorial = 1,global,first,last;
+	
+	MPI_Status status;	/* return status for 	*/
+				/* recieve		*/
+
+	/* Start up MPI */
+	MPI_Init( &argc , &argv );
+
+	/* Find out process rank */
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+	/* Find out number of process */
+	MPI_Comm_size(MPI_COMM_WORLD, &p);
+	
+	if(my_rank == 0)
+	{
+		printf("Enter a number to collect factorial: ");
+		scanf("%d",&num);
+	}
+	clock_t t;
+	MPI_Bcast(&num, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	first = (my_rank * num) / p;
+	
+	last = ( (my_rank + 1) * num) / p;
+	
+	/* calculate factorial */
+	for(i = first + 1 ; i <= last; i++)
+		factorial *= i;
+    printf("fact of sub %d \n",factorial);
+	/* but factoral into a golbal variable which only the root can see */ 
+	MPI_Reduce(&factorial, &global, 1, MPI_INT, MPI_PROD, 0, MPI_COMM_WORLD);
+
+	if(my_rank == 0){
+	
+		printf("\nFactorial %d is %d\n", num, global);
+	t=clock()-t;
+	printf ("It took me %d clicks (%f seconds).\n",t,((float)t)/CLOCKS_PER_SEC);}
+	/* shutdown MPI */
+	MPI_Finalize();
+	return 0;
+}
